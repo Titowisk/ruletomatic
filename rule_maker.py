@@ -84,7 +84,7 @@ def main():
         print(rule.name)
         print("-"*len(rule.name))
         fully_formated_rule = format_to_talend(rule)
-        # print(fully_formated_rule)
+        print(fully_formated_rule)
         write_to_file(rule.name, fully_formated_rule, directory_address='regras_teste/')
 
 
@@ -161,13 +161,13 @@ def format_to_talend(rule_obj):
     fully_formated_rule = ""
         
     for category in rule_obj.category:
-        initial_condition = "row1.LINHA_APURACAO != null && "
+        initial_condition = "row1.LINHA_APURACAO != null && \n"
         list_of_codes = rule_obj.grouped_by_rules
         # for element in list_of_codes[category]:  ToDo
         
         if(len(list_of_codes[category]) == 1):
             #do something
-            category_condition = "row1.LINHA_APURACAO.equalsIgnoreCase(\"{code}\") ? \"{rule}\" : ".format(
+            category_condition = "row1.LINHA_APURACAO.equalsIgnoreCase(\"{code}\") ? \"{rule}\" : \n".format(
                 code=list_of_codes[category][0], rule=category
             )
             formated_category =  initial_condition + category_condition
@@ -179,8 +179,10 @@ def format_to_talend(rule_obj):
                     category_condition = "(" + "row1.LINHA_APURACAO.equalsIgnoreCase(\"{code}\")".format(code=code)
                 else: # len(list_of_codes) = 4  [0, 1, 2, 3]
                     category_condition += " || row1.LINHA_APURACAO.equalsIgnoreCase(\"{code}\")".format(code=code)
-
-            category_condition += ")" + " ? \"{rule}\" : ".format(rule=category)
+                    if( i % 2 !=0):
+                        category_condition += '\n'
+            
+            category_condition = category_condition.rstrip('\n') + ")" + " ? \"{rule}\" : \n".format(rule=category)
             formated_category =  initial_condition + category_condition
             fully_formated_rule += formated_category
 
