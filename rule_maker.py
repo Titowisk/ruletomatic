@@ -60,10 +60,13 @@ row1.LINHA_APURACAO != null &&
 row1.LINHA_APURACAO.equalsIgnoreCase("E_11") ? "D100" : ""
 
 """
+from collections import namedtuple
+from itertools import groupby
+from os import mkdir
 
 from openpyxl import load_workbook
-from itertools import groupby
-from collections import namedtuple
+
+
 
 excel_rules_file_path = 'excel/regras_msp.xlsx'
 
@@ -81,7 +84,8 @@ def main():
         print(rule.name)
         print("-"*len(rule.name))
         fully_formated_rule = format_to_talend(rule)
-        print(fully_formated_rule)
+        # print(fully_formated_rule)
+        write_to_file(rule.name, fully_formated_rule, directory_address='regras_teste/')
 
 
     # print(grouped_by_rules)
@@ -101,7 +105,7 @@ def main():
 # This module gathers data from the excel rules file.
 def dataToDict():
     dict_rules = {} # a dictionary with {key:value} -> {<string>, <list>}
-    for col in ws.iter_cols(max_row=19, min_col=2, max_col=6):
+    for col in ws.iter_cols(max_row=19, min_col=2, max_col=8):
         for i, cell in enumerate(col):
             if i == 0:
                 key = cell.value
@@ -184,5 +188,29 @@ def format_to_talend(rule_obj):
     return fully_formated_rule
 
 # -------------------------------------------------------------------------------------------------------------------
+
+# This module write each fully_formated_rule into separeted .txt files
+
+def write_to_file(rule_name, fully_formated_rule, directory_address="regras/"):
+
+    try:
+        mkdir(directory_address)
+    except FileExistsError:
+        pass
+
+    file_address = directory_address + '{}.txt'.format(rule_name)
+    try:
+        # if file exists
+        with open(file_address, "r+") as f:
+            file_data = f.read()
+            f.seek(0,0)
+            f.write(fully_formated_rule.rstrip('\r\n') + '\n' + file_data)
+    except FileNotFoundError:
+        # if file does not exist
+        with open(file_address, "w+") as f:
+            f.write(fully_formated_rule)
+    finally:
+        f.close()
+        print("Formated rule for talend successfully created in {}".format(file_address))
 
 main()
