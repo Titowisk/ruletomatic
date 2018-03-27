@@ -13,8 +13,17 @@ CODIGO_DA_LINHA || OPERAÇÃO || BLOCO
 
 The first column is the reference, the others are the rules. This module will read, process, applie the rules and format
 it to use in Talend.
+
+How I named variables:
+CODIGO_DA_LINHA, OPERAÇÃO, BLOCO # These are rules
+E_01, E_02 # these are codes
+(0, 1, 'N/A') or (C100, D100, C180) # these are categories
+
+
 Step 1: Read and Process
 dataToDict(): return dict_rules
+
+Example:
 {
     'CÓDIGO DA LINHA': ['E_01', 'E_02', 'E_03', 'S_01'], 
     'OPERAÇÃO': [0, 0, 1, 'N/A'], 
@@ -22,7 +31,9 @@ dataToDict(): return dict_rules
     }
 
 Step 2: Applie rules
-applie_rules(dict_rules): return rules (# Is it a good name?)
+applie_rules(dict_rules): return rules_obj_list # a list containning each rule object.
+A rule object have: .name, .category and .grouped_by_rules attributes
+Example:
 
 Nome: OPERAÇÃO
 Categorias: {0, 1, 'N/A'}
@@ -42,7 +53,11 @@ Regras agrupadas: {
 ========================================
 
 Step 3: Format the results
+format_to_talend(rules): return fully_formated_rule
 
+Example: BLOCO rule
+row1.LINHA_APURACAO != null && 
+row1.LINHA_APURACAO.equalsIgnoreCase("E_11") ? "D100" : ""
 
 """
 
@@ -60,9 +75,9 @@ def main():
 
     dict_rules = dataToDict()
 
-    applied_rules = applie_rules(dict_rules)
+    rules_obj_list = applie_rules(dict_rules)
 
-    for rule in applied_rules:
+    for rule in rules_obj_list:
         print(rule.name)
         print("-"*len(rule.name))
         fully_formated_rule = format_to_talend(rule)
@@ -104,7 +119,7 @@ def applie_rules(dict_rules): # what name should I use?
     Rules = namedtuple('Rules', ['name', 'category', 'grouped_by_rules'])
     rules_values = dict_rules.values() # I iterate over it
     rules_keys = list(dict_rules.keys()) # I call each element to name each Rule
-    rules = []
+    rules_obj_list = []
     
     for i, column in enumerate(rules_values): # [(0, ["E_01", "E_02", "E_03" ...]), (1, [0, 0, 0, 1, 'N/A' ...]), (2, [1, 1, 1, 0, 'N/A'])]
         if i == 0:
@@ -129,49 +144,43 @@ def applie_rules(dict_rules): # what name should I use?
                 categories.add(key)
                 grouped_by_rules[key] = [ pair[0] for pair in group]
 
-            rules.append(Rules(rules_keys[i], categories, grouped_by_rules))
+            rules_obj_list.append(Rules(rules_keys[i], categories, grouped_by_rules))
 
-    return rules # return a list of named tuples
+    return rules_obj_list # return a list of named tuples
 
 # -------------------------------------------------------------------------------------------------------------------
 
 # This module write the code to use in Talend
 
-# expected result
-
-
-# Nome: OPERAÇÃO            r.name
-# Categorias: {0, 1, 'N/A'} r.category
-# Regras agrupadas: {       r.grouped_by_rules
-#     0: ['E_01', 'E_02'],
-#     1: ['E_03'], 
-#     'N/A': ['S_01']
-#     }
-
-def format_to_talend(rules):
+def format_to_talend(rule_obj):
 
     fully_formated_rule = ""
         
-    for category in rules.category:
-        initial_condition = "row1.LINHA_APURACAO != null &&"
-        list_of_codes = rules.grouped_by_rules.values()
-        if(len(list_of_codes) == 1):
+    for category in rule_obj.category:
+        initial_condition = "row1.LINHA_APURACAO != null && "
+        list_of_codes = rule_obj.grouped_by_rules
+        # for element in list_of_codes[category]:  ToDo
+        
+        if(len(list_of_codes[category]) == 1):
             #do something
-            category_condition = "row1.LINHA_APURACAO.equalsIgnoreCase(\"{code}\") ? \"{rule}\" :".format(
-                code=list_of_codes[0], rule=category
+            category_condition = "row1.LINHA_APURACAO.equalsIgnoreCase(\"{code}\") ? \"{rule}\" : ".format(
+                code=list_of_codes[category][0], rule=category
             )
             formated_category =  initial_condition + category_condition
             fully_formated_rule += formated_category
         else:
             #do other thing
-            for i, code in enumerate(list_of_codes): 
+            for i, code in enumerate(list_of_codes[category]): 
                 if(i == 0):
                     category_condition = "(" + "row1.LINHA_APURACAO.equalsIgnoreCase(\"{code}\")".format(code=code)
                 else: # len(list_of_codes) = 4  [0, 1, 2, 3]
                     category_condition += " || row1.LINHA_APURACAO.equalsIgnoreCase(\"{code}\")".format(code=code)
-            category_condition += ")" + " ? \"{rule}\" ".format(rule=category)
 
-    fully_formated_rule += ""
+            category_condition += ")" + " ? \"{rule}\" : ".format(rule=category)
+            formated_category =  initial_condition + category_condition
+            fully_formated_rule += formated_category
+
+    fully_formated_rule += "\"\" "
     return fully_formated_rule
 
 # -------------------------------------------------------------------------------------------------------------------
