@@ -84,7 +84,7 @@ def main():
         print(rule.name)
         print("-"*len(rule.name))
         fully_formated_rule = format_to_talend(rule)
-        print(fully_formated_rule)
+        # print(fully_formated_rule)
         write_to_file(rule.name, fully_formated_rule, directory_address='regras_teste/')
 
 
@@ -154,7 +154,7 @@ def applie_rules(dict_rules): # what name should I use?
 
 # -------------------------------------------------------------------------------------------------------------------
 
-# This module write the code to use in Talend
+# This module format the expressions to use in Talend
 
 def format_to_talend(rule_obj):
 
@@ -193,7 +193,7 @@ def format_to_talend(rule_obj):
 
 # This module write each fully_formated_rule into separeted .txt files
 
-def write_to_file(rule_name, fully_formated_rule, directory_address="regras/"):
+def write_to_file(rule_name, fully_formated_rule, directory_address="regras/", project_title='MSP'):
 
     try:
         mkdir(directory_address)
@@ -205,14 +205,26 @@ def write_to_file(rule_name, fully_formated_rule, directory_address="regras/"):
         # if file exists
         with open(file_address, "r+") as f:
             file_data = f.read()
+            new_title = version_control(file_data)
+            full_text = '\n' + new_title + '\n' + fully_formated_rule
             f.seek(0,0)
-            f.write(fully_formated_rule.rstrip('\r\n') + '\n' + file_data)
+            f.write(full_text + '\n' + file_data)
     except FileNotFoundError:
         # if file does not exist
         with open(file_address, "w+") as f:
-            f.write(fully_formated_rule)
+            full_text = '\n' + project_title + ' 1' + '\n' + fully_formated_rule
+            f.write(full_text)
     finally:
         f.close()
         print("Formated rule for talend successfully created in {}".format(file_address))
+
+def version_control(file_data):
+
+    end = file_data.find('\n', 2)
+    title_list = file_data[:end].split(" ")
+    new_version = int(title_list[1]) + 1
+    new_title = title_list[0].lstrip('\n') + ' ' + str(new_version)
+    return new_title
+
 
 main()
