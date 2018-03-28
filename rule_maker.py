@@ -206,6 +206,8 @@ def applie_rules(dict_rules): # what name should I use?
     for i, column in enumerate(rules_values): # [(0, ["E_01", "E_02", "E_03" ...]), (1, [0, 0, 0, 1, 'N/A' ...]), (2, [1, 1, 1, 0, 'N/A'])]
         if i == 0:
             list_of_line_codes = column
+        elif ('INFORMADO NA BASE' in column):
+            continue
         else:
             line_codes_and_rules = sorted(zip(list_of_line_codes, column), key= lambda x: str(x[1])) 
             # print(list(line_codes_and_rules)) # ("E_01", 0), ("E_02", 0)...
