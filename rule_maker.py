@@ -60,23 +60,62 @@ row1.LINHA_APURACAO != null &&
 row1.LINHA_APURACAO.equalsIgnoreCase("E_11") ? "D100" : ""
 
 """
+import argparse
+import re
 from collections import namedtuple
 from itertools import groupby
 from os import mkdir
 
 from openpyxl import load_workbook
 
-
-
-excel_rules_file_path = 'excel/regras_msp.xlsx'
-
-wb = load_workbook(excel_rules_file_path) # get the workbook
-
-ws = wb.active # get the first worksheet from the file
-
 def main():
 
-    dict_rules = dataToDict()
+    # rule_maker.py menu
+    # https://docs.python.org/3.3/library/argparse.html?highlight=arg
+    # TODO too many args :/
+    parser = argparse.ArgumentParser(
+        description='Read a excel file, process its rules and format the result for input in Talend TMap Expressions.'
+    )
+    group1 = parser.add_argument_group('Excel row and columns configuration.')
+    group1.add_argument(
+        'row_heading', type=int,
+        help='numero da linha onde esta o cabecalho das regras'
+    )
+    group1.add_argument(
+        'last_data_row', type=int,
+        help='numero da ultima linha que ainda contem valores'
+    )
+    group1.add_argument(
+        'first_column', type=int, metavar='first_col',
+        help='number of the first column'
+    )
+    group1.add_argument(
+        'last_column', type=int, metavar='last_col',
+        help='number of the last column'
+    )
+
+    parser.add_argument(
+        'directory_address', metavar='dir_addr',
+        help="the name of the directory to use (creates it if it doesn't exist)",
+        
+    )
+    parser.add_argument(
+        'project_title', metavar='proj_title',
+        help='the name of the current project to use as a version control inside each file created, and as a directory name'
+    )
+    args = parser.parse_args()
+    print(args.row_heading)
+    if args.directory_address:
+        directory_address = args.directory_address
+    else: # TODO Can I do this as a Function default (function name: write_to_file) ?
+        directory_address = "regras_" + args.project_title + "/"
+
+    dict_rules = dataToDict(
+        row_heading=args.row_heading,
+        last_data_row=args.last_data_row,
+        first_column=args.first_column,
+        last_column=args.last_column
+    )
 
     rules_obj_list = applie_rules(dict_rules)
 
@@ -85,7 +124,7 @@ def main():
         print("-"*len(rule.name))
         fully_formated_rule = format_to_talend(rule)
         # print(fully_formated_rule)
-        write_to_file(rule.name, fully_formated_rule, directory_address='regras_teste/')
+        write_to_file(rule.name, fully_formated_rule, directory_address=directory_address)
 
 
     # print(grouped_by_rules)
@@ -103,9 +142,15 @@ def main():
 # -------------------------------------------------------------------------------------------------------------------
 
 # This module gathers data from the excel rules file.
-def dataToDict():
+def dataToDict(row_heading, last_data_row, first_column, last_column):
+
+    excel_rules_file_path = 'excel/regras_msp_ferreirav3.xlsx'
+    wb = load_workbook(excel_rules_file_path) # get the workbook
+    ws = wb.active # get the first worksheet from the file
+
     dict_rules = {} # a dictionary with {key:value} -> {<string>, <list>}
-    for col in ws.iter_cols(max_row=19, min_col=2, max_col=8):
+
+    for col in ws.iter_cols(min_row=row_heading, max_row=last_data_row, min_col=first_column, max_col=last_column):
         for i, cell in enumerate(col):
             if i == 0:
                 key = cell.value
@@ -113,6 +158,39 @@ def dataToDict():
             else:
                 dict_rules[key].append(cell.value)
     return dict_rules
+
+# def excel_configuration(worksheet):
+
+#     class breakThroughLoops(Exception): pass
+    
+#     # find the the top and left limits
+#     try:
+#         for row in worksheet.rows:
+#             for cell in row:
+#                 m = re.search(r'\D_\d+', cell.value)
+#                 if m:
+#                     location = cell.colum + cell.row  # example 'B6'
+#                     row_heading = int(cell.row) - 1 # 6-1 =5
+#                     first_column = int(cell.col_idx)  # 2
+#                     raise breakThroughLoops
+#     except breakThroughLoops:
+#         pass
+    
+#     # find the bottom limit
+#     try:
+#         for col in worksheet.iter_cols(min_row=cell.row, min_col=cell.col_idx, max_col=cell.col_idx):
+#             for cell in col:
+#                 n = re.search(r'\D_\d+', cell.value)
+#                 if not n:
+#                     last_data_row = int(cell.col_idx) -1
+#                     raise breakThroughLoops
+#     except breakThroughLoops:
+#         pass
+
+#     # find the right limit
+
+#     return row_heading, last_data_row, first_column, last_column
+
 
 # -------------------------------------------------------------------------------------------------------------------
 
@@ -193,14 +271,14 @@ def format_to_talend(rule_obj):
 
 # This module write each fully_formated_rule into separeted .txt files
 
-def write_to_file(rule_name, fully_formated_rule, directory_address="regras/", project_title='MSP'):
+def write_to_file(rule_name, fully_formated_rule, directory_address, project_title='MSP'):
 
     try:
         mkdir(directory_address)
     except FileExistsError:
         pass
 
-    file_address = directory_address + '{}.txt'.format(rule_name)
+    file_address = directory_address + '/' + '{}.txt'.format(rule_name)
     try:
         # if file exists
         with open(file_address, "r+") as f:
