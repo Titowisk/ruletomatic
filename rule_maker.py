@@ -144,7 +144,7 @@ def main():
 # This module gathers data from the excel rules file.
 def dataToDict(row_heading, last_data_row, first_column, last_column):
 
-    excel_rules_file_path = 'excel/regras_msp_ferreirav3.xlsx'
+    excel_rules_file_path = 'excel/regras_msp_ferreirav6.xlsx'
     wb = load_workbook(excel_rules_file_path) # get the workbook
     ws = wb.active # get the first worksheet from the file
 
@@ -153,10 +153,10 @@ def dataToDict(row_heading, last_data_row, first_column, last_column):
     for col in ws.iter_cols(min_row=row_heading, max_row=last_data_row, min_col=first_column, max_col=last_column):
         for i, cell in enumerate(col):
             if i == 0:
-                key = cell.value
+                key = str(cell.value)
                 dict_rules.setdefault(key, [])
             else:
-                dict_rules[key].append(cell.value)
+                dict_rules[key].append(str(cell.value))
     return dict_rules
 
 # def excel_configuration(worksheet):
