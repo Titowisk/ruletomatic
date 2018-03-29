@@ -65,6 +65,7 @@ import re
 from collections import namedtuple
 from itertools import groupby
 from os import mkdir
+from datetime import datetime
 
 from openpyxl import load_workbook
 
@@ -299,11 +300,15 @@ def write_to_file(rule_name, fully_formated_rule, directory_address, project_tit
         print("Formated rule for talend successfully created in {}".format(file_address))
 
 def version_control(file_data):
-
+    time = datetime.now()
+    modified = '{day:02}/{month:02} - {hour:02}:{minute:02}:{second:02}'.format(
+        day=time.day, month=time.month, 
+        hour=time.hour, minute=time.minute, second=time.second
+        )
     end = file_data.find('\n', 2)
     title_list = file_data[:end].split(" ")
     new_version = int(title_list[1]) + 1
-    new_title = title_list[0].lstrip('\n') + ' ' + str(new_version)
+    new_title = title_list[0].lstrip('\n') + ' ' + str(new_version) + ' | modified: ' + modified
     return new_title
 
 
