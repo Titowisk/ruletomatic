@@ -267,7 +267,7 @@ def format_to_talend(rule_obj):
             formated_category =  initial_condition + category_condition
             fully_formated_rule += formated_category
 
-    fully_formated_rule += "\"\" "
+    fully_formated_rule += "\"\""
     return fully_formated_rule
 
 # -------------------------------------------------------------------------------------------------------------------
@@ -286,7 +286,14 @@ def write_to_file(rule_name, fully_formated_rule, directory_address, project_tit
         # if file exists
         with open(file_address, "r+") as f:
             file_data = f.read()
+
+            # Adds version and hour of modification
             new_title = version_control(file_data)
+
+            # Checks if the new expression is equal to previous expression
+            if check_changes(file_data, fully_formated_rule):
+                changed = ' | (no changes detected from previous expression)'
+                new_title += changed
             full_text = '\n' + new_title + '\n' + fully_formated_rule
             f.seek(0,0)
             f.write(full_text + '\n' + file_data)
@@ -311,9 +318,14 @@ def version_control(file_data):
     new_title = title_list[0].lstrip('\n') + ' ' + str(new_version) + ' | modified: ' + modified
     return new_title
 
-# def check_changes(file_data):
+def check_changes(file_data, fully_formated_rule):
 
-#     pass
+    start = file_data.find('row1')
+    end = file_data.find('\"\"', start)
+    previous_fully_formated_rule = file_data[start: end + 2]   
+
+    return sorted(fully_formated_rule) == sorted(previous_fully_formated_rule)
+
 
 
 main()
