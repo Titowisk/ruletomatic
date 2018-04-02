@@ -94,16 +94,16 @@ def main():
         'last_column', type=int, metavar='last_col',
         help='number of the last column'
     )
-
+    parser.add_argument(
+        'project_title', metavar='proj_title',
+        help='the name of the current project to use as a version control inside each file created'
+    )
     parser.add_argument(
         'directory_address', metavar='dir_addr',
         help="the name of the directory to use (creates it if it doesn't exist)",
         
     )
-    parser.add_argument(
-        'project_title', metavar='proj_title',
-        help='the name of the current project to use as a version control inside each file created, and as a directory name'
-    )
+    
     args = parser.parse_args()
     print(args.row_heading)
     if args.directory_address:
@@ -125,7 +125,7 @@ def main():
         print("-"*len(rule.name))
         fully_formated_rule = format_to_talend(rule)
         # print(fully_formated_rule)
-        write_to_file(rule.name, fully_formated_rule, directory_address=directory_address)
+        write_to_file(rule.name, fully_formated_rule, directory_address=directory_address, project_title=args.project_title)
 
 
     # print(grouped_by_rules)
@@ -145,7 +145,7 @@ def main():
 # This module gathers data from the excel rules file.
 def dataToDict(row_heading, last_data_row, first_column, last_column):
 
-    excel_rules_file_path = 'excel/regras_msp_ferreirav6.xlsx'
+    excel_rules_file_path = 'excel/regras_msp_ferreirav8.xlsx'
     wb = load_workbook(excel_rules_file_path) # get the workbook
     ws = wb.active # get the first worksheet from the file
 
@@ -274,7 +274,7 @@ def format_to_talend(rule_obj):
 
 # This module write each fully_formated_rule into separeted .txt files
 
-def write_to_file(rule_name, fully_formated_rule, directory_address, project_title='MSP'):
+def write_to_file(rule_name, fully_formated_rule, directory_address, project_title):
 
     try:
         mkdir(directory_address)
@@ -310,6 +310,10 @@ def version_control(file_data):
     new_version = int(title_list[1]) + 1
     new_title = title_list[0].lstrip('\n') + ' ' + str(new_version) + ' | modified: ' + modified
     return new_title
+
+# def check_changes(file_data):
+
+#     pass
 
 
 main()
