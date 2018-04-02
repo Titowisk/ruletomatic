@@ -128,18 +128,6 @@ def main():
         write_to_file(rule.name, fully_formated_rule, directory_address=directory_address, project_title=args.project_title)
 
 
-    # print(grouped_by_rules)
-
-    # print("=" * 40)
-    # print("Testing named tuples")
-
-    # for r in applied_rules:
-    #     print("=" * 40)
-    #     print("Nome: {}".format(r.name))
-    #     print("Categorias: {}".format(r.category))
-    #     print("Regras agrupadas: {}".format(r.grouped_by_rules))
-
-
 # -------------------------------------------------------------------------------------------------------------------
 
 # This module gathers data from the excel rules file.
@@ -237,15 +225,14 @@ def applie_rules(dict_rules): # what name should I use?
 
 # This module format the expressions to use in Talend
 
-def format_to_talend(rule_obj):
+def format_to_talend(rule_obj): # rule_obj.name, rule_obj.category, rule_obj.grouped_by_rules
 
     fully_formated_rule = ""
         
-    for category in rule_obj.category:
+    for category in sorted(rule_obj.category): #
         initial_condition = "row1.LINHA_APURACAO != null && \n"
         list_of_codes = rule_obj.grouped_by_rules
-        # for element in list_of_codes[category]:  ToDo
-        
+
         if(len(list_of_codes[category]) == 1):
             #do something
             category_condition = "row1.LINHA_APURACAO.equalsIgnoreCase(\"{code}\") ? \"{rule}\" : \n".format(
@@ -255,7 +242,7 @@ def format_to_talend(rule_obj):
             fully_formated_rule += formated_category
         else:
             #do other thing
-            for i, code in enumerate(list_of_codes[category]): 
+            for i, code in enumerate(sorted(list_of_codes[category])):  #
                 if(i == 0):
                     category_condition = "(" + "row1.LINHA_APURACAO.equalsIgnoreCase(\"{code}\")".format(code=code)
                 else: # len(list_of_codes) = 4  [0, 1, 2, 3]
