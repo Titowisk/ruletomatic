@@ -74,7 +74,7 @@ def main():
 # This module gathers data from the excel rules file.
 def dataToDict(row_heading, last_data_row, first_column, last_column):
 
-    excel_rules_file_path = 'excel/regras_msp_ferreirav8.xlsx'
+    excel_rules_file_path = 'excel/regras_msp_ferreirav12.xlsx'
     wb = load_workbook(excel_rules_file_path) # get the workbook
     ws = wb.active # get the first worksheet from the file
 
@@ -128,13 +128,13 @@ def dataToDict(row_heading, last_data_row, first_column, last_column):
 
 def applie_rules(dict_rules): # what name should I use?
 
-    Rules = namedtuple('Rules', ['name', 'category', 'grouped_by_rules'])
+    Rules = namedtuple('Rules', ['name', 'category', 'grouped_by_categories'])
     rules_values = dict_rules.values() # I iterate over it
     rules_keys = list(dict_rules.keys()) # I call each element to name each Rule
     rules_obj_list = []
     
     for i, column in enumerate(rules_values): # [(0, ["E_01", "E_02", "E_03" ...]), (1, [0, 0, 0, 1, 'N/A' ...]), (2, [1, 1, 1, 0, 'N/A'])]
-        if i == 0:
+        if i == 0: # line_of_codes must be the first column
             list_of_line_codes = column
         elif ('INFORMADO NA BASE' in column):
             continue
@@ -142,7 +142,7 @@ def applie_rules(dict_rules): # what name should I use?
             line_codes_and_rules = sorted(zip(list_of_line_codes, column), key= lambda x: str(x[1])) 
             # print(list(line_codes_and_rules)) # ("E_01", 0), ("E_02", 0)...
             categories = set()
-            grouped_by_rules = {}
+            grouped_by_categories = {}
             for key, group in groupby(line_codes_and_rules, key= lambda x: x[1]): # the key is always the second element of the tuple
                 # print("key: {0}, group: {1}".format(key, group))
                 # prints:
@@ -156,9 +156,9 @@ def applie_rules(dict_rules): # what name should I use?
                 # key: N/A, group: <itertools._grouper object at 0x000002D455B2DCC0>
                 # -----------------------------------------------------------------
                 categories.add(key)
-                grouped_by_rules[key] = [ pair[0] for pair in group]
+                grouped_by_categories[key] = [ pair[0] for pair in group]
 
-            rules_obj_list.append(Rules(rules_keys[i], categories, grouped_by_rules))
+            rules_obj_list.append(Rules(rules_keys[i], categories, grouped_by_categories))
 
     return rules_obj_list # return a list of named tuples
 
@@ -166,13 +166,13 @@ def applie_rules(dict_rules): # what name should I use?
 
 # This module format the expressions to use in Talend
 
-def format_to_talend(rule_obj): # rule_obj.name, rule_obj.category, rule_obj.grouped_by_rules
+def format_to_talend(rule_obj): # rule_obj.name, rule_obj.category, rule_obj.grouped_by_categories
 
     fully_formated_rule = ""
         
     for category in sorted(rule_obj.category): #
         initial_condition = "row1.LINHA_APURACAO != null && \n"
-        list_of_codes = rule_obj.grouped_by_rules
+        list_of_codes = rule_obj.grouped_by_categories
 
         if(len(list_of_codes[category]) == 1):
             #do something
