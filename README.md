@@ -51,18 +51,18 @@ A rule object have: .name, .category and .grouped_by_rules attributes
 
 Example:
 ```
-Nome: OPERAÇÃO
-Categorias: {0, 1, 'N/A'}
-Regras agrupadas: {
+Name: OPERAÇÃO
+Categories: {0, 1, 'N/A'}
+Grouped categories: {
     0: ['E_01', 'E_02'],
     1: ['E_03'], 
     'N/A': ['S_01']
     }
 ```
 ```
-Nome: BLOCO
-Categorias: {'D100', 'C180', 'C100'}
-Regras agrupadas: {
+Name: BLOCO
+Categories: {'D100', 'C180', 'C100'}
+Grouped categories: {
     'C100': ['E_01'], 
     'C180': ['E_03', 'S_01'], 
     'D100': ['E_02']
